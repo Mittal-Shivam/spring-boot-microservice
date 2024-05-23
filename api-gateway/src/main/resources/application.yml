@@ -1,0 +1,55 @@
+server:
+  port: 9000
+
+spring:
+  config:
+    import: configserver:http://localhost:9296
+  application:
+    name: API-GATEWAY
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: USER-SERVICE
+                fallbackuri: forward:/userServiceFallback
+        - id: DEPARTMENT-SERVICE
+          uri: lb://DEPARTMENT-SERVICE
+          predicates:
+            - Path=/departments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: DEPARTMENT-SERVICE
+                fallbackuri: forward:/departmentServiceFallback
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      USER-SERVICE:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+      DEPARTMENT-SERVICE:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  timelimiter:
+    instances:
+      USER-SERVICE:
+        timeoutDuration: 4s
+      DEPARTMENT-SERVICE:
+        timeoutDuration: 4s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus

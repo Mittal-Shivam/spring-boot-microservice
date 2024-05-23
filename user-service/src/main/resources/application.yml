@@ -1,0 +1,19 @@
+server:
+  port: 8002
+
+spring:
+  config:
+    import: configserver:http://localhost:9296
+  jpa:
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+  application:
+    name: USER-SERVICE
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
